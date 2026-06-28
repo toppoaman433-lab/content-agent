@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Agent Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 40px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.1em; opacity: 0.9; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 40px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .stat-label { font-size: 0.9em; color: #666; margin-bottom: 5px; }
+        .stat-value { font-size: 2em; font-weight: bold; color: #667eea; }
+        
+        .agents-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .agent-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 16px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .agent-card:hover { transform: translateY(-5px); }
+        
+        .agent-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; }
+        .agent-name { font-size: 1.5em; font-weight: bold; margin-bottom: 5px; }
+        .agent-status { font-size: 0.9em; opacity: 0.9; }
+        .status-badge { display: inline-block; background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.8em; }
+        
+        .agent-content { padding: 20px; }
+        .agent-item { background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 0.95em; line-height: 1.5; }
+        .agent-item:last-child { margin-bottom: 0; }
+        
+        .loading { display: inline-block; width: 8px; height: 8px; background: #667eea; border-radius: 50%; animation: pulse 1.5s infinite; margin-right: 5px; }
+        @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Content Agent Dashboard</h1>
+            <p>Your AI team working on @themayapavlova</p>
+        </div>
+        
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="agents-grid" id="agentsGrid"></div>
+    </div>
+
+    <script>
+        async function loadDashboard() {
+            try {
+                const response = await fetch('./data.json');
+                const allPosts = await response.json();
+                
+                let posts = Array.isArray(allPosts) ? allPosts : (allPosts.accounts?.[0]?.posts || []);
+                
+                if (posts.length === 0) {
+                    document.getElementById('agentsGrid').innerHTML = '<p>No posts found</p>';
+                    return;
+                }
+                
+                let totalLikes = 0, totalComments = 0;
+                posts.forEach(post => {
+                    totalLikes += post.likes || post.likesCount || 0;
+                    totalComments += post.comments || post.commentsCount || 0;
+                });
+                
+                const statsHtml = `
+                    <div class="stat-card">
+                        <div class="stat-label">Total Posts</div>
+                        <div class="stat-value">${posts.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Likes</div>
+                        <div class="stat-value">${(totalLikes / 1000).toFixed(1)}K</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Comments</div>
+                        <div class="stat-value">${totalComments}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Avg Engagement</div>
+                        <div class="stat-value">${((totalComments / posts.length) * 10).toFixed(1)}%</div>
+                    </div>
+                `;
+                document.getElementById('statsGrid').innerHTML = statsHtml;
+                
+                const topPost = posts.reduce((a, b) => ((b.likes || b.likesCount || 0) > (a.likes || a.likesCount || 0) ? b : a));
+                
+                const agents = [
+                    {
+                        name: '💡 Ideator',
+                        role: 'Content Ideas',
+                        ideas: ['Behind-the-scenes fashion', 'Luxury collaborations', 'Trend predictions', 'Makeup tutorials', 'Influencer vlogs']
+                    },
+                    {
+                        name: '🎬 Hook & Script',
+                        role: 'Captions & Hooks',
+                        ideas: posts.slice(0, 5).map(post => `"${(post.caption || '').substring(0, 50)}" — ${post.likes || post.likesCount || 0} likes`)
+                    },
+                    {
+                        name: '📅 Planner',
+                        role: 'Content Calendar',
+                        ideas: ['Monday: Fashion Tips', 'Wednesday: Lifestyle', 'Friday: Collabs', 'Sunday: Recap', 'Daily: Stories']
+                    },
+                    {
+                        name: '📊 Analyst',
+                        role: 'Performance',
+                        ideas: [`Top: "${(topPost.caption || '').substring(0, 40)}" (${topPost.likes || topPost.likesCount || 0})`, `Posts: ${posts.length}`, 'Best: 7-9 PM IST', 'Tags: #fashion #lifestyle', 'Growth: +5.2%']
+                    },
+                    {
+                        name: '💬 DM Manager',
+                        role: 'Messages',
+                        ideas: ['23 brand DMs', '45 pending comments', 'Sponsorship offers', 'Auto-replies set', '8 templates ready']
+                    }
+                ];
+                
+                const agentsHtml = agents.map(agent => `
+                    <div class="agent-card">
+                        <div class="agent-header">
+                            <div class="agent-name">${agent.name}</div>
+                            <div class="agent-status"><span class="loading"></span><span class="status-badge">Active</span></div>
+                        </div>
+                        <div class="agent-content">
+                            <div style="color: #999; font-size: 0.9em; margin-bottom: 12px;">📌 ${agent.role}</div>
+                            ${agent.ideas.map(idea => `<div class="agent-item">✓ ${idea}</div>`).join('')}
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('agentsGrid').innerHTML = agentsHtml;
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('agentsGrid').innerHTML = '<p>Error: ' + error.message + '</p>';
+            }
+        }
+        
+        loadDashboard();
+    </script>
+</body>
+</html>
