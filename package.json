@@ -2,9 +2,10 @@
   "name": "content-agent",
   "version": "1.0.0",
   "description": "Content Agent Dashboard with Telegram Bot",
-  "main": "scripts/scheduler.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node scripts/scheduler.js",
+    "start": "node server.js",
+    "scheduler": "node scripts/scheduler.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
